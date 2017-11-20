@@ -23,6 +23,8 @@ import org.kde.plasma.core 2.0 as PlasmaCore
 import org.kde.plasma.components 2.0 as PlasmaComponents
 import org.kde.plasma.plasmoid 2.0
 import org.kde.taskmanager 0.1 as TaskManager
+import org.kde.plasma.private.appmenu 1.0 as AppMenuPrivate
+
 /*Item {
 
     width: 1000
@@ -56,6 +58,21 @@ Item {
     property bool currentWindowMaximized: false
     property bool isActiveWindowPinned: false
     property bool isActiveWindowMaximized: false
+
+    // To get current activity name
+    TaskManager.ActivityInfo {
+        id: activityInfo
+    }
+
+    // To get virtual desktop name
+    TaskManager.VirtualDesktopInfo {
+        id: virtualDesktopInfo
+    }
+
+    // To get current focus state
+    AppMenuPrivate.AppMenuModel {
+        id: appMenuModel
+    }
 
     TaskManager.TasksModel {
         id: tasksModel
@@ -95,15 +112,32 @@ Item {
         return activeWindowModel.get(0) || {}
     }
     function updateActiveWindowInfo() {
-        appLabel.visible = activeWindowModel.count != 0
         var actTask = activeTask()
-        //console.warn(actTask.AppName)
         noWindowActive = activeWindowModel.count === 0 || actTask.IsActive !== true
         currentWindowMaximized = !noWindowActive && actTask.IsMaximized === true
         isActiveWindowPinned = actTask.VirtualDesktop === -1;
+
+        if(appMenuModel.menuAvailable && noWindowActive){
+            // With the help of appmenuModel we can know if some focused appmenu is there
+            // so it doesn't overwrite and maintain it returning now
+            // set text to disabled to visually note that no maximize dbl click can be done
+            appLabel.enabled = false
+            return
+        }
+        appLabel.enabled = true
+
         if (noWindowActive) {
-            appLabel.text = plasmoid.configuration.noWindowText
-            iconItem.source = "" //plasmoid.configuration.noWindowIcon
+            // if custom no window active
+            if (plasmoid.configuration.noWindowType === 0){
+              appLabel.text = activityInfo.activityName(activityInfo.currentActivity)
+              iconItem.source ="preferences-activities"
+            } else if (plasmoid.configuration.noWindowType === 1){
+              appLabel.text = virtualDesktopInfo.desktopNames[virtualDesktopInfo.currentDesktop-1]
+              iconItem.source ="desktop"
+            } else if ( plasmoid.configuration.noWindowType === 2){
+              appLabel.text = plasmoid.configuration.noWindowText
+              iconItem.source = ""
+            }
         } else {
             appLabel.text = textType === 1 ? actTask.AppName : replaceTitle(actTask.display)
             iconItem.source = actTask.decoration
@@ -145,6 +179,7 @@ Item {
             width: height + units.largeSpacing
             visible: show_application_icon
             anchors.verticalCenter: appLabel.verticalCenter
+            usesPlasmaTheme: true
         }
 
         PlasmaComponents.Label {

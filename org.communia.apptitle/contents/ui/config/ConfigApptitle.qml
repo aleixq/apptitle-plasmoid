@@ -9,6 +9,7 @@ Item {
     property alias cfg_useFixedWidth: useFixedWidth.checked
     property alias cfg_fixedWidth: fixedWidth.value
     property alias cfg_noWindowText: noWindowText.text
+    property alias cfg_noWindowType: noActiveType.currentIndex
     property alias cfg_textType: textTypeCombo.currentIndex
     property alias cfg_useWindowTitleReplace: useWindowTitleReplace.checked
     property alias cfg_replaceTextRegex: replaceTextRegex.text
@@ -18,6 +19,10 @@ Item {
 
     GridLayout {
         id: gridLayout
+        anchors.rightMargin: 0
+        anchors.bottomMargin: 0
+        anchors.leftMargin: 0
+        anchors.topMargin: 0
         rows: 1
         columns: 2
         anchors.fill: parent
@@ -48,14 +53,33 @@ Item {
         }
 
         Label {
-            id: label
-            text: qsTr("No window text:")
+            id: labelNoActiveType
+            text: qsTr("No active window label")
         }
+
+        RowLayout {
+            id: rowLayout
+            width: 100
+            height: 100
+
+            ComboBox {
+                id: noActiveType
+                model: [i18n('Activity name'),i18n('Desktop name'), i18n('Custom text')]
+            }
+        }
+
+
+        Label {
+            id: label
+            text: qsTr("No active window custom text:")
+        }
+
 
         TextField {
             id: noWindowText
             text: qsTr("Text Input")
             Layout.minimumWidth: theme.mSize(theme.defaultFont).width * 12
+            enabled: noActiveType.currentIndex === 2
         }
         Label {
             text: i18n('Text type:')
@@ -106,6 +130,8 @@ Item {
                 checked: cfg_bold
             }
         }
+
+
 
     }
 
